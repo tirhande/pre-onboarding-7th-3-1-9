@@ -1,29 +1,27 @@
 import instance from './axiosInstance';
 import { ISicks } from '@types';
+import axios, { AxiosError } from 'axios';
 
 const URL_SICK = 'sick';
 
 export const getSick = async (param: string): Promise<ISicks[]> => {
   if (param === '') return [];
+
   if ('caches' in window) {
-    const payload = {
-      sickNm_like: param,
+    const config = {
+      params: {
+        sickNm_like: param,
+      },
     };
-    const queryStr = new URLSearchParams(payload).toString();
-    const cacheStorage = await caches.open(URL_SICK);
-    const cachedResponse = await cacheStorage.match(queryStr);
-
-    if (!cachedResponse || !cachedResponse.ok) {
-      const config = {
-        params: payload,
-      };
-      const { data } = await instance.get(`/${URL_SICK}`, config);
-      cacheStorage.put(queryStr, new Response(JSON.stringify(data)));
-      return data;
+    try {
+      const response = await instance.get(`/${URL_SICK}`, config);
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError;
+      if (axios.isAxiosError(err)) {
+        console.error(err);
+      }
     }
-
-    const cached = await cachedResponse?.json();
-    return cached;
   }
 
   return [];
